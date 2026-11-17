@@ -1,5 +1,6 @@
 package ru.yandexpraktikum.blechat.presentation.chats.outcomingchat
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -9,7 +10,6 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import ru.yandexpraktikum.blechat.domain.bluetooth.BleClientController
-import ru.yandexpraktikum.blechat.domain.model.Message
 import ru.yandexpraktikum.blechat.presentation.chats.ChatEvent
 import ru.yandexpraktikum.blechat.presentation.chats.ChatState
 import javax.inject.Inject
@@ -42,18 +42,13 @@ class OutcomingChatViewModel @Inject constructor(
             }
             is ChatEvent.SendMessage -> {
                 viewModelScope.launch {
-                    val message = Message(
-                        text = event.message,
-                        senderAddress = event.address,
-                        isFromLocalUser = true
-                    )
-                    _state.update { it.copy(
-                        messages = it.messages + message
-                    )}
-                    clientController.sendMessage(
+                    val sent = clientController.sendMessage(
                         event.message,
                         event.address
                     )
+                    if (!sent) {
+                        Log.e("BLE", "Failed to start sending message")
+                    }
                 }
             }
         }
